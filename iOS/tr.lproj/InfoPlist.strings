@@ -1,0 +1,4 @@
+/* Uygulama adı ve izin metinleri (Türkçe) */
+"CFBundleDisplayName" = "iPhone Fare";
+"NSCameraUsageDescription" = "Ters modda arka kamera tavanı görür ve telefonun yerini bulur. Görüntü kaydedilmez, telefondan çıkmaz.";
+"NSLocalNetworkUsageDescription" = "Aynı Wi-Fi'daki Mac'te çalışan iPhone Fare uygulamasını bulmak ve ona fare hareketlerini göndermek için.";

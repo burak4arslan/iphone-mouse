@@ -16,13 +16,7 @@ final class FareController: NSObject, ObservableObject {
     enum Mod: String, CaseIterable, Identifiable {
         case kamera, sensor, touchpad
         var id: String { rawValue }
-        var ad: String {
-            switch self {
-            case .kamera: return "Ters (kamera)"
-            case .sensor: return "Düz (sensör)"
-            case .touchpad: return "Touchpad"
-            }
-        }
+        func ad(en: Bool) -> String { Metin.mod(rawValue, en: en) }
     }
 
     @Published var mod: Mod = .kamera

@@ -15,7 +15,7 @@ struct IPhoneFareApp: App {
     @StateObject private var alici = FareAlici()
 
     var body: some Scene {
-        WindowGroup("iPhone Fare") {
+        WindowGroup(Metin.ingilizce ? Metin.uygulamaAdi.en : Metin.uygulamaAdi.tr) {
             AnaGorunum(alici: alici)
                 .frame(width: 480)
         }
@@ -125,7 +125,7 @@ final class FareAlici: ObservableObject {
     func pencereyiYerlestir() {
         guard !pencereYerlesti, !ekran.isEmpty,
               let s = NSScreen.screens.first(where: { $0.localizedName == ekran }),
-              let pencere = NSApp.windows.first(where: { $0.isVisible && $0.title == "iPhone Fare" }) else { return }
+              let pencere = NSApp.windows.first(where: { $0.isVisible && [Metin.uygulamaAdi.tr, Metin.uygulamaAdi.en].contains($0.title) }) else { return }
         pencereYerlesti = true
         let alan = s.visibleFrame
         pencere.setFrameOrigin(NSPoint(x: alan.maxX - pencere.frame.width - 30, y: alan.maxY - pencere.frame.height - 30))
@@ -392,8 +392,8 @@ final class FareAlici: ObservableObject {
         halkayiGuncelle()
         if let p = paket, bagli {
             let calisiyor = p.oturum != 0
-            let adlar = ["kamera": "Ters (kamera)", "sensor": "Düz (sensör)", "sensor-ters": "Ters (sensör)", "touchpad": "Touchpad"]
-            let yeniMod = calisiyor ? (adlar[p.mod] ?? p.mod) : "Telefonda başlatılmadı"
+            // Ham anahtar ("kamera", "sensor-ters"…; "" = telefonda başlatılmadı), ekranda Metin.mod çevirir
+            let yeniMod = calisiyor ? p.mod : ""
             if yeniMod != mod { mod = yeniMod }
             let yeniDurum = calisiyor ? p.durum : ""
             if yeniDurum != durum { durum = yeniDurum }
@@ -411,30 +411,38 @@ final class FareAlici: ObservableObject {
 
 struct AnaGorunum: View {
     @ObservedObject var alici: FareAlici
+    @AppStorage(Metin.anahtar) private var dil = ""
+    private var en: Bool { Metin.ingilizce(dil) }
+
+    private var modVeDurum: String {
+        let mod = alici.mod.isEmpty ? (en ? "Not started on the phone" : "Telefonda başlatılmadı") : Metin.mod(alici.mod, en: en)
+        return [mod, Metin.durum(alici.durum, en: en)].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Label(alici.bagli ? "Telefon bağlı" : "Telefon bekleniyor…",
+                    Label(alici.bagli ? (en ? "Phone connected" : "Telefon bağlı") : (en ? "Waiting for the phone…" : "Telefon bekleniyor…"),
                           systemImage: alici.bagli ? "iphone.radiowaves.left.and.right" : "iphone.slash")
                         .font(.title2.bold())
                         .foregroundStyle(alici.bagli ? Color.green : Color.primary)
-                    Text(alici.bagli ? [alici.mod, alici.durum].filter { !$0.isEmpty }.joined(separator: " · ")
-                                     : "Telefonda iPhone Fare uygulamasını aç. İkisi aynı Wi-Fi'da olsun.")
+                    Text(alici.bagli ? modVeDurum
+                                     : (en ? "Open the iPhone Mouse app on the phone. Both must be on the same Wi-Fi."
+                                           : "Telefonda iPhone Fare uygulamasını aç. İkisi aynı Wi-Fi'da olsun."))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Toggle("Fare açık", isOn: $alici.acik).toggleStyle(.switch)
+                Toggle(en ? "Mouse on" : "Fare açık", isOn: $alici.acik).toggleStyle(.switch)
             }
 
             if !alici.izin {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                    Text("Tıklama ve sürükleme için Erişilebilirlik izni gerekli. İzin yokken sadece imleç oynar.")
+                    Text(en ? "Clicking and dragging need Accessibility permission. Without it only the cursor moves." : "Tıklama ve sürükleme için Erişilebilirlik izni gerekli. İzin yokken sadece imleç oynar.")
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer()
-                    Button("İzin ver") { alici.izinIste() }
+                    Button(en ? "Allow" : "İzin ver") { alici.izinIste() }
                 }
                 .padding(10)
                 .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
@@ -444,51 +452,58 @@ struct AnaGorunum: View {
                 .frame(height: 170)
                 .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                 .overlay(alignment: .topLeading) {
-                    Text("Telefonun yolu (son 4 sn)").font(.caption).foregroundStyle(.secondary).padding(8)
+                    Text(en ? "Phone path (last 4 s)" : "Telefonun yolu (son 4 sn)").font(.caption).foregroundStyle(.secondary).padding(8)
                 }
 
             HStack {
-                Text("Hız: \(Int(alici.hizMm)) mm/sn")
+                Text(en ? "Speed: \(Int(alici.hizMm)) mm/s" : "Hız: \(Int(alici.hizMm)) mm/sn")
                 Spacer()
-                if alici.mod.hasPrefix("Ters") { Text("Tavanda \(alici.nokta) nokta") }
+                if alici.mod == "kamera" { Text(en ? "\(alici.nokta) ceiling points" : "Tavanda \(alici.nokta) nokta") }
                 Spacer()
-                Text("Tık: \(alici.tikSayisi)")
+                Text(en ? "Clicks: \(alici.tikSayisi)" : "Tık: \(alici.tikSayisi)")
             }
             .monospacedDigit()
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Hassasiyet: 1 mm = \(Int(alici.hassasiyet)) nokta")
+                Text(en ? "Sensitivity: 1 mm = \(Int(alici.hassasiyet)) points" : "Hassasiyet: 1 mm = \(Int(alici.hassasiyet)) nokta")
                 Slider(value: $alici.hassasiyet, in: 2...40, step: 1)
-                Toggle("Hızlı itince daha uzağa git (ivme)", isOn: $alici.ivme)
+                Toggle(en ? "Go further on fast pushes (acceleration)" : "Hızlı itince daha uzağa git (ivme)", isOn: $alici.ivme)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(String(format: "Vurma eşiği: %.2f g · son vuruş %.2f g", alici.vurmaEsigi, alici.vurmaTepe))
+                Text(String(format: en ? "Tap threshold: %.2f g · last tap %.2f g" : "Vurma eşiği: %.2f g · son vuruş %.2f g", alici.vurmaEsigi, alici.vurmaTepe))
                     .monospacedDigit()
                 Slider(value: $alici.vurmaEsigi, in: 0.04...0.6)
-                Text("Ters modda tık: telefonun sırtına parmakla vur. Vuruş değeri eşiği geçince tık sayılır.")
+                Text(en ? "Face-down click: tap the back of the phone with a finger. A tap above the threshold counts as a click." : "Ters modda tık: telefonun sırtına parmakla vur. Vuruş değeri eşiği geçince tık sayılır.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Picker("İmleç şu ekranda kalsın", selection: $alici.ekran) {
-                    Text("Bütün ekranlar").tag("")
+                Picker(en ? "Keep the cursor on" : "İmleç şu ekranda kalsın", selection: $alici.ekran) {
+                    Text(en ? "All displays" : "Bütün ekranlar").tag("")
                     ForEach(alici.ekranAdlari, id: \.self) { Text($0).tag($0) }
                 }
-                Toggle("İmlecin etrafında halka (çekimde görünsün, tıklayınca parlar)", isOn: $alici.halkaAcik)
+                Toggle(en ? "Ring around the cursor (visible on video, flashes on clicks)" : "İmlecin etrafında halka (çekimde görünsün, tıklayınca parlar)", isOn: $alici.halkaAcik)
             }
 
-            DisclosureGroup("Yönler") {
+            DisclosureGroup(en ? "Directions" : "Yönler") {
                 VStack(alignment: .leading) {
-                    Toggle("Sağ-sol ters", isOn: $alici.tersX)
-                    Toggle("İleri-geri ters", isOn: $alici.tersY)
-                    Toggle("Kaydırma ters", isOn: $alici.tersKaydir)
+                    Toggle(en ? "Flip left-right" : "Sağ-sol ters", isOn: $alici.tersX)
+                    Toggle(en ? "Flip forward-back" : "İleri-geri ters", isOn: $alici.tersY)
+                    Toggle(en ? "Flip scrolling" : "Kaydırma ters", isOn: $alici.tersKaydir)
                 }
                 .padding(.top, 4)
             }
 
+            Picker(selection: Binding(get: { Dil(rawValue: dil) ?? .sistem }, set: { dil = $0.rawValue })) {
+                ForEach(Dil.allCases) { Text($0.ad).tag($0) }
+            } label: {
+                Label(en ? "Language" : "Dil", systemImage: "globe")
+            }
+            .pickerStyle(.segmented)
+
             if alici.dinleyiciDurumu != "hazır" {
-                Text("Ağ: \(alici.dinleyiciDurumu)").font(.caption).foregroundStyle(.orange)
+                Text((en ? "Network: " : "Ağ: ") + Metin.durum(alici.dinleyiciDurumu, en: en)).font(.caption).foregroundStyle(.orange)
             }
         }
         .padding(22)

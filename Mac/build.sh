@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 BUNDLE_ID="${IPHONEFARE_MAC_BUNDLE_ID:-com.example.iphonefare.mac}"
 APP="build/iPhone Fare.app"
 rm -rf build; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-swiftc -O -parse-as-library -o "$APP/Contents/MacOS/iPhoneFare" main.swift ../iOS/Fare/FareProtokol.swift \
+swiftc -O -parse-as-library -o "$APP/Contents/MacOS/iPhoneFare" main.swift ../iOS/Fare/FareProtokol.swift ../iOS/Fare/Metin.swift \
   -framework SwiftUI -framework Network -framework ApplicationServices
 cp AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cat > "$APP/Contents/Info.plist" <<PL
@@ -26,7 +26,7 @@ cat > "$APP/Contents/Info.plist" <<PL
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSLocalNetworkUsageDescription</key><string>iPhone Fare uygulamasından fare hareketlerini almak için.</string>
+  <key>NSLocalNetworkUsageDescription</key><string>To receive mouse movements from the iPhone Mouse app. / iPhone Fare uygulamasından fare hareketlerini almak için.</string>
   <key>NSBonjourServices</key><array><string>_iphonefare._udp</string></array>
 </dict></plist>
 PL

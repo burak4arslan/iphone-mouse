@@ -6,6 +6,8 @@ import SwiftUI
 // Touchpad modunda bütün ekran Mac trackpad'i gibi dokunma yüzeyi.
 struct FareView: View {
     @ObservedObject var fare: FareController
+    @AppStorage(Metin.anahtar) private var dil = ""
+    private var en: Bool { Metin.ingilizce(dil) }
 
     var body: some View {
         ZStack {
@@ -24,8 +26,17 @@ struct FareView: View {
                 ayarlar
             }
         }
-        .navigationTitle("iPhone fare")
+        .navigationTitle(en ? Metin.uygulamaAdi.en : Metin.uygulamaAdi.tr)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    AyarlarEkrani()
+                } label: {
+                    Image(systemName: "gearshape").accessibilityLabel(en ? "Settings" : "Ayarlar")
+                }
+            }
+        }
         .toolbar(fare.calisiyor ? .hidden : .visible, for: .navigationBar)
         .navigationBarBackButtonHidden(fare.calisiyor)
         .statusBarHidden(fare.calisiyor)
@@ -40,27 +51,33 @@ struct FareView: View {
     private var modAciklamasi: String {
         switch fare.mod {
         case .kamera:
-            return "Ekran masaya gelecek şekilde ters koy, üst kenar ileri baksın. Arka kamera tavanı görür, telefonun yerini oradan bulur. Sol tık: ses açma tuşu ya da telefonun sırtına parmakla vur. Sağ tık: ses kısma tuşu. Kamerayı elinle kapatma, telefonu alt yarısından tut. Işık açık olsun."
+            return en
+                ? "Lay it face-down, top edge pointing forward. The back camera sees the ceiling and works out where the phone is. Left click: volume up or tap the back of the phone. Right click: volume down. Don't cover the camera, hold the lower half. Keep the lights on."
+                : "Ekran masaya gelecek şekilde ters koy, üst kenar ileri baksın. Arka kamera tavanı görür, telefonun yerini oradan bulur. Sol tık: ses açma tuşu ya da telefonun sırtına parmakla vur. Sağ tık: ses kısma tuşu. Kamerayı elinle kapatma, telefonu alt yarısından tut. Işık açık olsun."
         case .sensor:
-            return "Ekran yukarı, düz koy. Yer değişimini sadece ivme sensörü hesaplar. Ekranın üstü sol ve sağ düğme, ortadaki şerit kaydırma. Ses tuşları da sol ve sağ tık. Avucun ekranın alt yarısında durabilir."
+            return en
+                ? "Lay it flat, screen up. Only the accelerometer tracks the movement. The top of the screen is the left and right button, the middle strip scrolls. The volume buttons click too. Your palm can rest on the lower half."
+                : "Ekran yukarı, düz koy. Yer değişimini sadece ivme sensörü hesaplar. Ekranın üstü sol ve sağ düğme, ortadaki şerit kaydırma. Ses tuşları da sol ve sağ tık. Avucun ekranın alt yarısında durabilir."
         case .touchpad:
-            return "Ekran Mac'in trackpad'i olur. Tek parmakla kaydır: imleç gider. Dokun: sol tık, iki kere dokun: çift tık. İki parmakla dokun: sağ tık. İki parmakla kaydır: sayfa kayar. Dokun, hemen tekrar dokunup sürükle: tutup taşır. Ses tuşları da sol ve sağ tık. Dikey de yatay da tutabilirsin, elinde eğik tutunca kendisi anlar; masada düz yatıyorsa Döndür'e bas."
+            return en
+                ? "The screen becomes the Mac's trackpad. Slide one finger: the cursor moves. Tap: left click, tap twice: double click. Two-finger tap: right click. Two-finger slide: scroll. Tap, then tap again and drag: drag and drop. The volume buttons click too. Portrait or landscape both work; held at an angle it turns by itself, lying flat press Rotate."
+                : "Ekran Mac'in trackpad'i olur. Tek parmakla kaydır: imleç gider. Dokun: sol tık, iki kere dokun: çift tık. İki parmakla dokun: sağ tık. İki parmakla kaydır: sayfa kayar. Dokun, hemen tekrar dokunup sürükle: tutup taşır. Ses tuşları da sol ve sağ tık. Dikey de yatay da tutabilirsin, elinde eğik tutunca kendisi anlar; masada düz yatıyorsa Döndür'e bas."
         }
     }
 
     private var ayarlar: some View {
         Form {
             Section {
-                Picker("Nasıl", selection: $fare.mod) {
-                    ForEach(FareController.Mod.allCases) { Text($0.ad).tag($0) }
+                Picker(en ? "Mode" : "Nasıl", selection: $fare.mod) {
+                    ForEach(FareController.Mod.allCases) { Text($0.ad(en: en)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 Text(modAciklamasi)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 if fare.mod == .sensor {
-                    Toggle("Ters koy (ekran masada)", isOn: $fare.sensorTers)
-                    Text("Kameralar yüzünden telefon ekran yukarıyken düz durmuyorsa: ters koy, ekranı masaya dümdüz yatsın. Tık ses tuşlarıyla.")
+                    Toggle(en ? "Face-down (screen on the desk)" : "Ters koy (ekran masada)", isOn: $fare.sensorTers)
+                    Text(en ? "If the camera bump stops the phone lying flat screen-up: turn it over so the screen lies flat on the desk. Click with the volume buttons." : "Kameralar yüzünden telefon ekran yukarıyken düz durmuyorsa: ters koy, ekranı masaya dümdüz yatsın. Tık ses tuşlarıyla.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -68,14 +85,14 @@ struct FareView: View {
             Section("Mac") {
                 if let mac = fare.mac {
                     Label(mac.ad, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
-                    if !mac.acik { Text("Mac'te fare kapalı. iPhone Fare penceresinden aç.").foregroundStyle(.orange) }
+                    if !mac.acik { Text(en ? "The mouse is switched off on the Mac. Turn it on in the iPhone Mouse window." : "Mac'te fare kapalı. iPhone Fare penceresinden aç.").foregroundStyle(.orange) }
                     if !mac.izin {
-                        Text("Mac'te Erişilebilirlik izni yok: imleç oynar ama tıklama olmaz. iPhone Fare penceresinden izin ver.")
+                        Text(en ? "No Accessibility permission on the Mac: the cursor moves but clicks don't work. Allow it in the iPhone Mouse window." : "Mac'te Erişilebilirlik izni yok: imleç oynar ama tıklama olmaz. iPhone Fare penceresinden izin ver.")
                             .foregroundStyle(.orange)
                     }
                 } else {
-                    Label("Mac aranıyor…", systemImage: "magnifyingglass")
-                    Text("Mac'te iPhone Fare uygulamasını aç. İkisi aynı Wi-Fi'da olsun.")
+                    Label(en ? "Looking for the Mac…" : "Mac aranıyor…", systemImage: "magnifyingglass")
+                    Text(en ? "Open the iPhone Mouse app on the Mac. Both must be on the same Wi-Fi." : "Mac'te iPhone Fare uygulamasını aç. İkisi aynı Wi-Fi'da olsun.")
                         .font(.callout).foregroundStyle(.secondary)
                 }
             }
@@ -84,11 +101,11 @@ struct FareView: View {
                 Button {
                     fare.baslat()
                 } label: {
-                    Label("Başlat", systemImage: "computermouse.fill").frame(maxWidth: .infinity)
+                    Label(en ? "Start" : "Başlat", systemImage: "computermouse.fill").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
             } footer: {
-                Text("Telefonu kaldırınca ya da çevirince imleç durur. Durdurmak için telefonu eline al, ekrandaki Durdur'a bas.")
+                Text(en ? "Lifting or turning the phone stops the cursor. To stop, pick the phone up and press Stop on the screen." : "Telefonu kaldırınca ya da çevirince imleç durur. Durdurmak için telefonu eline al, ekrandaki Durdur'a bas.")
             }
         }
     }
@@ -97,20 +114,25 @@ struct FareView: View {
 // Ters mod: ekran masada, kimse görmüyor. Telefonu eline alıp çevirince Durdur görünür.
 private struct TersEkran: View {
     @ObservedObject var fare: FareController
+    @AppStorage(Metin.anahtar) private var dil = ""
+    private var en: Bool { Metin.ingilizce(dil) }
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             VStack(spacing: 18) {
                 Image(systemName: "computermouse.fill").font(.system(size: 64)).foregroundStyle(.white.opacity(0.8))
-                Text(fare.durum).font(.title2.bold()).foregroundStyle(.white)
-                Text(fare.mod == .kamera ? "Tavanda \(fare.nokta) iz noktası · \(fare.tikSayisi) sol, \(fare.sagTikSayisi) sağ tık"
-                     : "Sensör, ters · \(fare.tikSayisi) sol, \(fare.sagTikSayisi) sağ tık")
+                Text(Metin.durum(fare.durum, en: en)).font(.title2.bold()).foregroundStyle(.white)
+                Text(fare.mod == .kamera
+                     ? (en ? "\(fare.nokta) ceiling points · \(fare.tikSayisi) left, \(fare.sagTikSayisi) right clicks"
+                           : "Tavanda \(fare.nokta) iz noktası · \(fare.tikSayisi) sol, \(fare.sagTikSayisi) sağ tık")
+                     : (en ? "Sensor, face-down · \(fare.tikSayisi) left, \(fare.sagTikSayisi) right clicks"
+                           : "Sensör, ters · \(fare.tikSayisi) sol, \(fare.sagTikSayisi) sağ tık"))
                     .font(.callout.monospacedDigit()).foregroundStyle(.white.opacity(0.6))
-                Text(fare.mac.map { "Mac: \($0.ad)" } ?? "Mac aranıyor…")
+                Text(fare.mac.map { "Mac: \($0.ad)" } ?? (en ? "Looking for the Mac…" : "Mac aranıyor…"))
                     .font(.callout).foregroundStyle(fare.mac == nil ? .orange : .green)
                 if !fare.dogruDuruyor {
-                    Button("Durdur") { fare.durdur() }
+                    Button(en ? "Stop" : "Durdur") { fare.durdur() }
                         .buttonStyle(.borderedProminent).tint(.red).controlSize(.large)
                         .padding(.top, 20)
                 }
@@ -123,23 +145,25 @@ private struct TersEkran: View {
 // Düz mod: farenin üstü
 private struct FareYuzeyi: View {
     @ObservedObject var fare: FareController
+    @AppStorage(Metin.anahtar) private var dil = ""
+    private var en: Bool { Metin.ingilizce(dil) }
 
     var body: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
                 HStack(spacing: 6) {
-                    FareDugmesi(ad: "Sol", basili: fare.sol) { fare.dugme(sol: true, basili: $0) }
+                    FareDugmesi(ad: en ? "Left" : "Sol", basili: fare.sol) { fare.dugme(sol: true, basili: $0) }
                     KaydirmaSeridi { fare.kaydir($0) }
                         .frame(width: 70)
-                    FareDugmesi(ad: "Sağ", basili: fare.sag) { fare.dugme(sol: false, basili: $0) }
+                    FareDugmesi(ad: en ? "Right" : "Sağ", basili: fare.sag) { fare.dugme(sol: false, basili: $0) }
                 }
                 .frame(height: geo.size.height * 0.42)
 
                 // Avuç yeri: dokunmalar boşa gider
                 VStack(spacing: 10) {
                     Spacer()
-                    Text(fare.durum).font(.title3.bold()).foregroundStyle(.white.opacity(0.7))
-                    Text(fare.mac.map { "Mac: \($0.ad)" } ?? "Mac aranıyor…")
+                    Text(Metin.durum(fare.durum, en: en)).font(.title3.bold()).foregroundStyle(.white.opacity(0.7))
+                    Text(fare.mac.map { "Mac: \($0.ad)" } ?? (en ? "Looking for the Mac…" : "Mac aranıyor…"))
                         .font(.callout).foregroundStyle(fare.mac == nil ? .orange : .green.opacity(0.8))
                     Spacer()
                 }
@@ -156,8 +180,8 @@ private struct FareYuzeyi: View {
                 ZStack {
                     Color.black.opacity(0.85).ignoresSafeArea()
                     VStack(spacing: 16) {
-                        Text("Düz koyunca devam eder").font(.title3).foregroundStyle(.white)
-                        Button("Durdur") { fare.durdur() }
+                        Text(en ? "Lay it flat to continue" : "Düz koyunca devam eder").font(.title3).foregroundStyle(.white)
+                        Button(en ? "Stop" : "Durdur") { fare.durdur() }
                             .buttonStyle(.borderedProminent).tint(.red).controlSize(.large)
                     }
                 }
@@ -224,6 +248,8 @@ private struct KaydirmaSeridi: View {
 // Touchpad: bütün ekran dokunma yüzeyi. Üstte durum ve Durdur, parmakların altında halka (çekimde görünsün).
 private struct TouchpadEkrani: View {
     @ObservedObject var fare: FareController
+    @AppStorage(Metin.anahtar) private var dil = ""
+    private var en: Bool { Metin.ingilizce(dil) }
 
     var body: some View {
         ZStack {
@@ -245,7 +271,7 @@ private struct TouchpadEkrani: View {
             // Kullanıcının "yukarısı": telefon yatay tutulunca ok döner
             VStack(spacing: 6) {
                 Image(systemName: "arrow.up").font(.system(size: 54, weight: .bold))
-                Text("yukarı").font(.caption.bold())
+                Text(en ? "up" : "yukarı").font(.caption.bold())
             }
             .foregroundStyle(.white.opacity(0.12))
             .rotationEffect(.degrees(fare.touchpadYonu == .dikey ? 0 : (fare.touchpadYonu == .yatayUstSolda ? 90 : -90)))
@@ -256,9 +282,10 @@ private struct TouchpadEkrani: View {
             VStack {
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(fare.mac.map { "Mac: \($0.ad)" } ?? "Mac aranıyor…")
+                        Text(fare.mac.map { "Mac: \($0.ad)" } ?? (en ? "Looking for the Mac…" : "Mac aranıyor…"))
                             .font(.callout).foregroundStyle(fare.mac == nil ? .orange : .green.opacity(0.8))
-                        Text("\(fare.durum) · \(fare.tikSayisi) sol, \(fare.sagTikSayisi) sağ tık")
+                        Text(en ? "\(Metin.durum(fare.durum, en: true)) · \(fare.tikSayisi) left, \(fare.sagTikSayisi) right clicks"
+                             : "\(fare.durum) · \(fare.tikSayisi) sol, \(fare.sagTikSayisi) sağ tık")
                             .font(.caption.monospacedDigit()).foregroundStyle(.white.opacity(0.5))
                     }
                     .allowsHitTesting(false)
@@ -266,10 +293,10 @@ private struct TouchpadEkrani: View {
                     Button {
                         fare.touchpadDondur()
                     } label: {
-                        Label(fare.touchpadYonu.ad, systemImage: "rotate.right")
+                        Label(en ? (fare.touchpadYonu == .dikey ? "portrait" : "landscape") : fare.touchpadYonu.ad, systemImage: "rotate.right")
                     }
                     .buttonStyle(.bordered).tint(.white)
-                    Button("Durdur") { fare.durdur() }
+                    Button(en ? "Stop" : "Durdur") { fare.durdur() }
                         .buttonStyle(.bordered).tint(.red)
                 }
                 .padding(.horizontal, 18)

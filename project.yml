@@ -1,6 +1,7 @@
 # The Xcode project is generated with XcodeGen: ./generate.sh (uses the team and bundle ID from Config/local.env)
 name: IPhoneFare
 options:
+  developmentLanguage: en
   deploymentTarget:
     iOS: "17.0"
 settings:
@@ -19,6 +20,8 @@ targets:
       path: iOS/Info.plist
       properties:
         CFBundleDisplayName: iPhone Fare
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, tr]   # texts: iOS/*.lproj/InfoPlist.strings and iOS/Fare/Metin.swift
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}

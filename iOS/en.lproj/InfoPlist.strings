@@ -1,0 +1,4 @@
+/* App name and permission texts (English) */
+"CFBundleDisplayName" = "iPhone Mouse";
+"NSCameraUsageDescription" = "In face-down mode the back camera looks at the ceiling to find where the phone is. Nothing is recorded and nothing leaves the phone.";
+"NSLocalNetworkUsageDescription" = "To find the iPhone Mouse app running on a Mac on the same Wi-Fi and send it mouse movements.";
