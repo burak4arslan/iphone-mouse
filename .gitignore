@@ -1,0 +1,12 @@
+# --- Personal: never committed ---
+Config/local.env
+
+# --- Generated / build output ---
+IPhoneFare.xcodeproj/
+iOS/Info.plist
+build/
+Mac/build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store

@@ -1,0 +1,35 @@
+# The Xcode project is generated with XcodeGen: ./generate.sh (uses the team and bundle ID from Config/local.env)
+name: IPhoneFare
+options:
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    DEVELOPMENT_TEAM: ${IPHONEFARE_TEAM_ID}
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+targets:
+  IPhoneFare:
+    type: application
+    platform: iOS
+    sources:
+      - path: iOS
+        excludes: ["Info.plist"]
+    info:
+      path: iOS/Info.plist
+      properties:
+        CFBundleDisplayName: iPhone Fare
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiredDeviceCapabilities: [arkit]
+        # Ters (kamera) mode: the back camera looks at the ceiling and ARKit tracks the phone's position
+        NSCameraUsageDescription: Ters modda arka kamera tavanı görür ve telefonun yerini bulur. Görüntü kaydedilmez, telefondan çıkmaz.
+        # The phone finds the Mac app on the home Wi-Fi (Bonjour) and sends it small UDP packets
+        NSLocalNetworkUsageDescription: Aynı Wi-Fi'daki Mac'te çalışan iPhone Fare uygulamasını bulmak ve ona fare hareketlerini göndermek için.
+        NSBonjourServices: [_iphonefare._udp]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ${IPHONEFARE_BUNDLE_ID}
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

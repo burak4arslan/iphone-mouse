@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 Hedef</title>
+<style>
+  /* iPhone fare videosu, yarış bölümü: 10 hedefi en kısa sürede vur. Ses yok.
+     Hedefler her denemede aynı sırayla ve aynı yerde çıkar (adil yarış). Safari'de tam ekran (⌃⌘F), VG27A'da aç.
+     Boyut: hedef.html?boyut=90 · Başka dizilim: hedef.html?tohum=7 */
+  :root { --zemin: #070b14; --yazi: #eef2f7; --soluk: #8b95a7; --sari: #ffd23f; --kirmizi: #ef3b36; --yesil: #34d399; }
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% 40%, #1a2a4a 0%, #0b1222 55%, var(--zemin) 100%);
+    color: var(--yazi); font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+    overflow: hidden; user-select: none; -webkit-user-select: none; cursor: default;
+  }
+  body::before {   /* çekim duvar kâğıdındaki nokta ızgarası */
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(255,255,255,.05) 1.2px, transparent 1.3px); background-size: 48px 48px;
+  }
+  #ust { position: fixed; top: 28px; left: 0; right: 0; display: flex; justify-content: center; gap: 56px;
+         font-weight: 800; font-size: 34px; letter-spacing: .5px; font-variant-numeric: tabular-nums; pointer-events: none; }
+  #ust span small { display: block; font-size: 14px; color: var(--soluk); letter-spacing: 3px; font-weight: 700; text-align: center; }
+  #sure { color: var(--sari); min-width: 150px; text-align: center; }
+  #hedef { position: fixed; border-radius: 50%; display: none; transform: translate(-50%, -50%);
+           background: radial-gradient(circle, var(--kirmizi) 0 22%, #fff 23% 52%, var(--kirmizi) 53% 100%);
+           box-shadow: 0 0 0 4px rgba(239,59,54,.25), 0 8px 30px rgba(0,0,0,.5); }
+  .patlama { position: fixed; border-radius: 50%; border: 4px solid var(--yesil); transform: translate(-50%, -50%);
+             pointer-events: none; animation: patla .45s ease-out forwards; }
+  @keyframes patla { from { width: 40px; height: 40px; opacity: 1; } to { width: 160px; height: 160px; opacity: 0; } }
+  .iska { position: fixed; color: var(--kirmizi); font-weight: 900; font-size: 30px; transform: translate(-50%, -50%);
+          pointer-events: none; animation: sön .5s ease-out forwards; }
+  @keyframes sön { to { opacity: 0; transform: translate(-50%, -90%); } }
+  #orta { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+  #orta h1 { font-size: 92px; font-weight: 900; letter-spacing: 2px; }
+  #orta p { color: var(--soluk); font-size: 24px; font-weight: 600; }
+  #sonuc { font-size: 120px; font-weight: 900; color: var(--sari); font-variant-numeric: tabular-nums; }
+  button { font: inherit; font-size: 30px; font-weight: 800; color: #0b0f18; background: var(--sari); border: 0;
+           border-radius: 999px; padding: 22px 64px; cursor: pointer; box-shadow: 0 10px 40px rgba(255,210,63,.25); }
+  button:active { transform: scale(.97); }
+  #gecmis { position: fixed; right: 28px; bottom: 24px; text-align: right; color: var(--soluk); font-size: 18px; font-weight: 600;
+            line-height: 1.6; font-variant-numeric: tabular-nums; pointer-events: none; }
+  #gecmis b { color: var(--yazi); }
+</style>
+</head>
+<body>
+<div id="ust" hidden>
+  <span><small>SÜRE</small><span id="sure">0,00</span></span>
+  <span><small>HEDEF</small><span id="sayi">0 / 10</span></span>
+  <span><small>ISKA</small><span id="iskaSayi">0</span></span>
+</div>
+<div id="hedef"></div>
+<div id="orta">
+  <h1 id="baslik">10 HEDEF</h1>
+  <p id="aciklama">Hepsini en kısa sürede vur. Süre ilk hedefe tıklayınca başlar.</p>
+  <div id="sonuc" hidden></div>
+  <button id="basla">Başla</button>
+</div>
+<div id="gecmis"></div>
+<script>
+const parametre = new URLSearchParams(location.search);
+const BOYUT = Math.max(30, Math.min(200, Number(parametre.get('boyut')) || 84));
+const TOHUM = Number(parametre.get('tohum')) || 2026;
+const SAYI = 10;
+const $ = id => document.getElementById(id);
+const hedef = $('hedef');
+hedef.style.width = hedef.style.height = BOYUT + 'px';
+
+// Her denemede aynı dizilim: tohumlu rastgele (mulberry32)
+function dizilim() {
+  let a = TOHUM >>> 0;
+  const r = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1);
+                    t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const kenar = BOYUT, ust = 150;
+  const liste = [];
+  let onceki = { x: 0.5, y: 0.5 };
+  while (liste.length < SAYI) {
+    const p = { x: r(), y: r() };
+    if (Math.hypot(p.x - onceki.x, p.y - onceki.y) < 0.28) continue;   // art arda hedefler birbirine yakın olmasın
+    liste.push(p); onceki = p;
+  }
+  return liste.map(p => ({ x: kenar + p.x * (innerWidth - 2 * kenar), y: ust + p.y * (innerHeight - ust - kenar) }));
+}
+
+let yerler = [], sira = 0, baslangic = 0, iska = 0, saat = null, oyunda = false;
+const gecmis = [];
+
+function bicim(sn) { return sn.toFixed(2).replace('.', ','); }
+function hedefiGoster() {
+  const p = yerler[sira];
+  hedef.style.left = p.x + 'px'; hedef.style.top = p.y + 'px';
+  hedef.style.display = 'block';   // animasyonsuz: hedef her durumda hemen görünsün
+}
+function basla() {
+  yerler = dizilim(); sira = 0; iska = 0; baslangic = 0; oyunda = true;
+  $('orta').hidden = true; $('ust').hidden = false;
+  $('sure').textContent = '0,00'; $('sayi').textContent = `0 / ${SAYI}`; $('iskaSayi').textContent = '0';
+  hedefiGoster();
+}
+function bitir() {
+  oyunda = false; clearInterval(saat);
+  const sn = (performance.now() - baslangic) / 1000;
+  hedef.style.display = 'none';
+  gecmis.push({ sn, iska });
+  $('sure').textContent = bicim(sn);
+  $('baslik').textContent = 'BİTTİ';
+  $('aciklama').textContent = iska ? `${iska} ıska` : 'Hiç ıska yok';
+  $('sonuc').hidden = false; $('sonuc').textContent = bicim(sn) + ' sn';
+  $('basla').textContent = 'Tekrar';
+  $('orta').hidden = false;
+  $('gecmis').innerHTML = gecmis.map((g, i) => `${i + 1}. deneme <b>${bicim(g.sn)} sn</b>${g.iska ? ` · ${g.iska} ıska` : ''}`).join('<br>');
+}
+function sayac() { $('sure').textContent = bicim((performance.now() - baslangic) / 1000); }
+
+hedef.addEventListener('mousedown', e => {
+  if (!oyunda) return;
+  e.stopPropagation();
+  if (sira === 0) { baslangic = performance.now(); saat = setInterval(sayac, 30); }
+  const p = document.createElement('div'); p.className = 'patlama';
+  p.style.left = yerler[sira].x + 'px'; p.style.top = yerler[sira].y + 'px';
+  document.body.appendChild(p); setTimeout(() => p.remove(), 500);
+  sira++;
+  $('sayi').textContent = `${sira} / ${SAYI}`;
+  if (sira >= SAYI) bitir(); else hedefiGoster();
+});
+document.addEventListener('mousedown', e => {
+  if (!oyunda || sira === 0 || e.target === hedef) return;   // süre başlamadan ıska sayılmaz
+  iska++; $('iskaSayi').textContent = iska;
+  const m = document.createElement('div'); m.className = 'iska'; m.textContent = '✗';
+  m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px';
+  document.body.appendChild(m); setTimeout(() => m.remove(), 550);
+});
+$('basla').addEventListener('click', basla);
+document.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !oyunda) { e.preventDefault(); basla(); } });
+</script>
+</body>
+</html>
