@@ -1,11 +1,21 @@
 import AppKit
 // iPhone Fare simgesi: koyu zemin, ortada fare gibi duran bir telefon (üstte iki düğme), altında hareket izi. 1024x1024 PNG.
+// swift icon.swift <çıktı.png> [ios]
+//   Mac: kenarda saydam boşluk, yuvarlak köşeli kare (macOS simgeleri böyle).
+//   ios: kenara kadar dolu, saydamsız kare; köşeleri iOS kendisi yuvarlatır (saydam yerleri beyaz boyar).
 let s = 1024
+let ios = CommandLine.arguments.count > 2 && CommandLine.arguments[2] == "ios"
 let ctx = CGContext(data: nil, width: s, height: s, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                    bitmapInfo: (ios ? CGImageAlphaInfo.noneSkipLast : CGImageAlphaInfo.premultipliedLast).rawValue)!
 func rgb(_ h: UInt32, _ a: CGFloat = 1) -> CGColor { CGColor(srgbRed: CGFloat(h >> 16 & 255) / 255, green: CGFloat(h >> 8 & 255) / 255, blue: CGFloat(h & 255) / 255, alpha: a) }
 let tile = CGRect(x: 100, y: 100, width: 824, height: 824)
-ctx.addPath(CGPath(roundedRect: tile, cornerWidth: 185, cornerHeight: 185, transform: nil)); ctx.clip()
+if ios {
+    // Mac karesini (100…924) bütün tuvale yay: çizim aynı, sadece kenar boşluğu yok
+    ctx.scaleBy(x: CGFloat(s) / tile.width, y: CGFloat(s) / tile.height)
+    ctx.translateBy(x: -tile.minX, y: -tile.minY)
+} else {
+    ctx.addPath(CGPath(roundedRect: tile, cornerWidth: 185, cornerHeight: 185, transform: nil)); ctx.clip()
+}
 let bg = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB)!, colors: [rgb(0x24324F), rgb(0x0B1020)] as CFArray, locations: [0, 1])!
 ctx.drawLinearGradient(bg, start: CGPoint(x: 512, y: 924), end: CGPoint(x: 512, y: 100), options: [])
 // Hareket izi: telefonun arkasında kesik kesik sarı çizgi
